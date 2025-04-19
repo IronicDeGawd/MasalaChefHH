@@ -26,6 +26,9 @@ const config = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 1280,
     height: 960
+  },
+  audio: {
+    noAudio: true
   }
 };
 

@@ -20,6 +20,7 @@ class BootScene extends Phaser.Scene {
     this.load.image('pan', 'assets/pan.png');
     this.load.image('stove', 'assets/stove.png');
     this.load.image('woodenSpoon', 'assets/woodenspoon.png');
+    //intentionally wrong spelling
     this.load.image('mixingSpoon', 'assets/mixng_spoon.png');
     
     // Fix container image paths - these need to be verified or created
@@ -33,6 +34,7 @@ class BootScene extends Phaser.Scene {
     this.load.image('potato-raw', 'assets/potato_raw.png');
     this.load.image('potato-peeled', 'assets/potato_peeled.png');
     this.load.image('potato-diced', 'assets/potato_diced.png');
+    this.load.image('potato-cooking', 'assets/potato_cooking.png');
     this.load.image('potato-cooked', 'assets/potato_cooked.png');
     this.load.image('onion', 'assets/onion_raw.png');
     

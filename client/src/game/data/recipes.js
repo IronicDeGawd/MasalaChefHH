@@ -101,7 +101,7 @@ const recipes = {
       {
         id: 12,
         description: 'Stir the potatoes to mix all spices',
-        item: 'woodenSpoon',
+        item: 'mixingSpoon',
         action: 'stir',
         options: ['gentle', 'medium', 'vigorous'],
         correctOption: 'medium'
@@ -109,7 +109,7 @@ const recipes = {
       {
         id: 13,
         description: 'Cook for 10-15 minutes, stirring occasionally',
-        item: 'woodenSpoon',
+        item: 'mixingSpoon',
         action: 'cook',
         options: ['5 minutes', '10 minutes', '15 minutes'],
         correctOption: '10 minutes',
