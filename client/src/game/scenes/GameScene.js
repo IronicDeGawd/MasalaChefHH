@@ -943,7 +943,6 @@ class GameScene extends Phaser.Scene {
         } else if (
           relevantStep &&
           relevantStep.id === 13 && // Final cooking step
-          relevantStep.item === "mixingSpoon" &&
           relevantStep.action === "cook" &&
           !this.actionInProgress
         ) {
@@ -951,12 +950,23 @@ class GameScene extends Phaser.Scene {
           console.log("Pan clicked for final cooking step");
           this.showCookingOptionsFromPan(this.items["pan"], relevantStep);
         } else if (!this.actionInProgress) {
-          this.showFloatingText(
-            this.items["pan"].x,
-            this.items["pan"].y,
-            "Not yet time for this step!",
-            "#FF0000"
-          );
+          // Show guidance if they're trying to skip step 12 (mixing step)
+          const nextExpectedStepId = this.completedStepIds.length + 1;
+          if (nextExpectedStepId === 12) {
+            this.showFloatingText(
+              this.items["pan"].x,
+              this.items["pan"].y,
+              "You need to mix the ingredients first with the mixing spoon!",
+              "#FFA500" // Orange color for guidance
+            );
+          } else {
+            this.showFloatingText(
+              this.items["pan"].x,
+              this.items["pan"].y,
+              "Not yet time for this step!",
+              "#FF0000"
+            );
+          }
         }
       });
     }
@@ -1229,14 +1239,26 @@ class GameScene extends Phaser.Scene {
       // Set up pointer move listener only if we don't already have one
       if (!this.cursorListenerActive && this.handCursor) {
         this.cursorListenerActive = true;
-        this.input.on("pointermove", (pointer) => {
+        // Make sure we're passing a function reference to the event listener
+        const moveHandler = (pointer) => {
           if (this.handCursor) {
             this.handCursor.x = pointer.x;
             this.handCursor.y = pointer.y;
             this.handCursor.setVisible(true);
           }
-        });
+        };
+
+        this.input.on("pointermove", moveHandler);
       }
+    }
+  }
+
+  // Update coordinate display in the corner for debugging
+  updateCoordinateDisplay(pointer) {
+    if (this.coordinateText) {
+      this.coordinateText.setText(
+        `X: ${Math.floor(pointer.x)}, Y: ${Math.floor(pointer.y)}`
+      );
     }
   }
 
@@ -1358,6 +1380,23 @@ class GameScene extends Phaser.Scene {
         if (isZeera) {
           console.log("Detected zeera, using special handler");
           this.handleZeeraAddition(key, option, step);
+          return;
+        }
+
+        // Check if this ingredient has already been added
+        const gameData = this.registry.get("gameData");
+        if (gameData.ingredients[spiceName]) {
+          // Ingredient already exists, just show feedback but don't complete step
+          this.showFloatingText(
+            item.x,
+            item.y,
+            `${spiceName} already added! Adding more...`,
+            "#FFA500"
+          );
+
+          console.log(
+            `${spiceName} was already added. Not completing step again.`
+          );
           return;
         }
 
@@ -1798,6 +1837,9 @@ class GameScene extends Phaser.Scene {
         // Make sure spoon is above potato in depth
         stirSpoon.setDepth(7); // Increased from 4 to 7
 
+        // Create sizzle effect around the pan
+        this.createSmokeEffect(550, 640, 0xcccccc, 0.3);
+
         // Rotate spoon for stirring effect
         this.tweens.add({
           targets: stirSpoon,
@@ -1887,8 +1929,8 @@ class GameScene extends Phaser.Scene {
 
         const countdownText = this.add
           .text(
-            this.itemPositions.stove.x,
-            this.itemPositions.stove.y - 70,
+            550, //Below The Stove coordinates
+            875,
             `Cooking: ${countdown}s`,
             {
               font: "16px Arial",
@@ -1999,6 +2041,26 @@ class GameScene extends Phaser.Scene {
       (option) => {
         console.log(`Selected oil quantity: ${option}`);
 
+        // Get game data to check if oil was already added
+        const gameData = this.registry.get("gameData");
+
+        // Check if oil has already been added
+        if (gameData.ingredients["oil"]) {
+          // Oil already exists, just show feedback but don't complete step again
+          this.showFloatingText(
+            oilItem.x,
+            oilItem.y,
+            `Oil already added! Adding more...`,
+            "#FFA500"
+          );
+
+          // Still create the visual effect
+          this.createOilEffect(550, 650);
+
+          console.log("Oil was already added. Not completing step again.");
+          return;
+        }
+
         // In debug mode, we'll warn but not prevent
         if (!this.panOnStove) {
           console.warn("Pan is not on stove yet!");
@@ -2018,7 +2080,6 @@ class GameScene extends Phaser.Scene {
         }
 
         // Check if stove is hot (but allow it for debugging)
-        const gameData = this.registry.get("gameData");
         const stoveHeat = gameData.ingredients["stove_heat"] || "";
 
         if (!stoveHeat || stoveHeat === "Off") {
@@ -2110,6 +2171,131 @@ class GameScene extends Phaser.Scene {
       console.error("Error creating oil effect:", error);
       this.showFloatingText(x, y - 20, "Oil added!", "#FFFF00");
     }
+  }
+
+  showCookingOptionsFromPan(pan, step) {
+    this.showOptions(
+      pan.x,
+      pan.y - 100,
+      step.options,
+      (option) => {
+        this.actionInProgress = true;
+
+        // Show cooking timer - use seconds instead of minutes for gameplay
+        // Extract just the number value from the option
+        const cookTimeMin = parseInt(option);
+        // Convert to seconds for game purposes (fast cooking)
+        let countdown = 7; // Just 7 seconds regardless of option
+
+        const countdownText = this.add
+          .text(
+            this.itemPositions.stove.x,
+            this.itemPositions.stove.y - 70,
+            `Cooking: ${countdown}s`,
+            {
+              font: "16px Arial",
+              fill: "#FF0000",
+              backgroundColor: "#FFFFFF",
+              padding: { x: 5, y: 5 },
+            }
+          )
+          .setOrigin(0.5)
+          .setDepth(4);
+
+        // Start cooking interval
+        const cookingInterval = setInterval(() => {
+          countdown--;
+          countdownText.setText(`Cooking: ${countdown}s`);
+
+          // Create smoke effect randomly during cooking
+          if (Math.random() < 0.2) {
+            this.createSmokeEffect(
+              this.itemPositions.stove.x,
+              this.itemPositions.stove.y - 20
+            );
+          }
+
+          if (countdown <= 0) {
+            clearInterval(cookingInterval);
+            countdownText.destroy();
+
+            // Show cooked potatoes - make the cooked potato visible
+            this.items["potato-diced"].setVisible(false);
+            if (this.items["potato-cooked"]) {
+              this.items["potato-cooked"].setVisible(true);
+            } else {
+              // Use the exact Figma coordinates from itemPositions
+              const cookedPos = this.itemPositions["potato-cooked"];
+              this.items["potato-cooked"] = this.add
+                .image(610, 710, "potato-cooked")
+                .setDepth(6); // Increased from 3 to 6
+            }
+
+            this.showFloatingText(
+              pan.x,
+              pan.y,
+              "Cooking complete - Dish is ready!",
+              "#008000"
+            );
+
+            // Add extra stirring animation for visual effect
+            const mixingSpoon = this.items["mixingSpoon"];
+            if (mixingSpoon) {
+              // Store original position
+              const originalX = mixingSpoon.x;
+              const originalY = mixingSpoon.y;
+              const originalAngle = mixingSpoon.angle || 0;
+              const originalDepth = mixingSpoon.depth || 2;
+
+              // Move spoon to pan
+              const stirPosition = { x: 550, y: 680 };
+              mixingSpoon.setPosition(stirPosition.x, stirPosition.y);
+              mixingSpoon.setDepth(7); // Increased from 4 to 7
+
+              // Rotate spoon for stirring effect
+              this.tweens.add({
+                targets: mixingSpoon,
+                angle: { from: -15, to: 15 },
+                ease: "Sine.easeInOut",
+                duration: 300,
+                yoyo: true,
+                repeat: 2,
+                onComplete: () => {
+                  // Return spoon to original position
+                  this.tweens.add({
+                    targets: mixingSpoon,
+                    x: originalX,
+                    y: originalY,
+                    angle: originalAngle,
+                    duration: 300,
+                    onComplete: () => {
+                      mixingSpoon.setDepth(originalDepth);
+                    },
+                  });
+                },
+              });
+            }
+
+            // Check if step exists before completing it
+            if (step) {
+              this.completeStep(step, option);
+            } else {
+              console.warn(
+                "Cannot complete step: step is undefined in showCookingOptionsFromPan"
+              );
+            }
+
+            this.actionInProgress = false;
+
+            // Check if recipe is complete
+            if (this.isRecipeComplete()) {
+              this.finishCooking();
+            }
+          }
+        }, 1000);
+      },
+      "Choose Cooking Time"
+    );
   }
 
   // Debug method to visualize interactive areas
@@ -2697,9 +2883,15 @@ class GameScene extends Phaser.Scene {
       timeBonus = Math.floor((expectedTimeMinutes - timeTakenMinutes) * 5); // 5 points per minute saved
     }
 
+    // Reset mistakes list before checking for missing ingredients
+    // to avoid duplicate reports when testing with the debug button
+    const previousMistakes = this.mistakes.filter(
+      (m) => m.type !== "missing_ingredient"
+    );
+    this.mistakes = [...previousMistakes];
+
     // Penalty for missing required ingredients
     const requiredIngredients = [
-      "potato",
       "oil",
       "zeera",
       "turmeric",
@@ -2708,6 +2900,28 @@ class GameScene extends Phaser.Scene {
     ];
     let missingIngredients = [];
 
+    // Special check for potato - we need to check steps, not just ingredients
+    // If potato steps were completed, we consider it used
+    const potatoStepsCompleted = gameData.steps.some(
+      (step) =>
+        step.item === "potato" ||
+        step.item === "potato-raw" ||
+        step.item === "potato-peeled" ||
+        step.item === "potato-diced"
+    );
+
+    // If potato steps not found, add as missing
+    if (!potatoStepsCompleted) {
+      missingIngredients.push("potato");
+      this.gameScore -= 10;
+      this.mistakes.push({
+        type: "missing_ingredient",
+        ingredient: "potato",
+        description: `Required ingredient not used: potato`,
+      });
+    }
+
+    // Check other ingredients
     requiredIngredients.forEach((ingredient) => {
       if (!gameData.ingredients[ingredient]) {
         missingIngredients.push(ingredient);
@@ -2808,28 +3022,6 @@ class GameScene extends Phaser.Scene {
     });
   }
 
-  getCurrentStep() {
-    // Find the first uncompleted step
-    return this.steps.find((step) => !step.completed);
-  }
-
-  highlightCurrentStep() {
-    // Clear any existing highlights
-    this.checklist.forEach((item) => {
-      if (!item.completed) {
-        item.text.setColor("#000000"); // Reset to black
-      }
-    });
-
-    // Find the next uncompleted step
-    const currentStep = this.getCurrentStep();
-    if (currentStep) {
-      const checklistItem = this.checklist[currentStep.id - 1];
-      checklistItem.text.setColor("#0000FF"); // Highlight in blue
-    }
-  }
-
-  // Special method for handling zeera (cumin) addition
   handleZeeraAddition(itemKey, quantity, step) {
     // Check if step is valid
     if (!step || typeof step !== "object") {
@@ -2854,458 +3046,109 @@ class GameScene extends Phaser.Scene {
       };
     }
 
-    // Check if stove is hot and pan is on stove
+    const item = this.items[itemKey];
+    if (!item) {
+      console.error(`Item with key "${itemKey}" not found for zeera addition`);
+      return false;
+    }
+
+    // Check if zeera has already been added
     const gameData = this.registry.get("gameData");
-    const stoveHeat = gameData.ingredients["stove_heat"] || "";
+    if (gameData.ingredients["zeera"]) {
+      // Zeera already exists, just show feedback but don't complete step again
+      this.showFloatingText(
+        item.x,
+        item.y,
+        `Zeera already added! Adding more...`,
+        "#FFA500"
+      );
 
-    // Get the proper spice name
-    const spiceName = this.spiceMap[itemKey] || "zeera";
+      // Play sizzle effect for visual feedback anyway
+      this.createSmokeEffect(
+        this.itemPositions.stove.x,
+        this.itemPositions.stove.y - 20,
+        0xa0522d // Brown color for zeera
+      );
 
-    console.log(`Handling ${spiceName} addition with quantity ${quantity}`);
+      console.log(`Zeera was already added. Not completing step again.`);
+      return false;
+    }
 
-    // In debug mode, we'll warn but not prevent
+    // Check if the pan is on the stove before adding zeera
     if (!this.panOnStove) {
-      console.warn("Pan is not on stove yet for zeera addition!");
+      console.warn("Pan is not on stove yet!");
       this.showFloatingText(
-        this.items[itemKey].x,
-        this.items[itemKey].y,
-        "Warning: Pan should be on stove first (but allowing)",
+        item.x,
+        item.y,
+        "Warning: Pan should be on stove first",
         "#FFA500"
       );
 
-      // Still log the mistake
+      // Log the mistake
       this.mistakes.push({
         type: "wrong_order",
-        description: `Added ${spiceName} before placing pan on stove`,
+        description: "Added zeera before placing pan on stove",
         step: step.id,
       });
     }
 
-    if (!stoveHeat || stoveHeat === "Off") {
-      console.warn("Stove is not hot yet for zeera addition!");
-      this.showFloatingText(
-        this.items[itemKey].x,
-        this.items[itemKey].y,
-        "Warning: Stove should be hot first (but allowing)",
-        "#FFA500"
-      );
+    // Play sizzle effect animation when adding zeera to hot oil
+    this.createSmokeEffect(
+      this.itemPositions.stove.x,
+      this.itemPositions.stove.y - 20,
+      0xa0522d // Brown color for zeera
+    );
 
-      // Still log the mistake
-      this.mistakes.push({
-        type: "wrong_order",
-        description: `Added ${spiceName} before turning on stove`,
-        step: step.id,
-      });
-    }
-
-    if (!gameData.ingredients["oil"]) {
-      console.warn("Oil has not been added yet for zeera addition!");
-      this.showFloatingText(
-        this.items[itemKey].x,
-        this.items[itemKey].y,
-        "Warning: Oil should be added first (but allowing)",
-        "#FFA500"
-      );
-
-      // Still log the mistake
-      this.mistakes.push({
-        type: "wrong_order",
-        description: `Added ${spiceName} before adding oil`,
-        step: step.id,
-      });
-    }
-
-    // All conditions met - add zeera with crackling effect
-    // Use the right position based on where the pan is
-    // const targetX = this.panOnStove
-    //   ? this.itemPositions.stove.x
-    //   : this.itemPositions.pan.x + this.itemPositions.pan.width / 2;
-
-    // const targetY = this.panOnStove
-    //   ? this.itemPositions.stove.y - 30
-    //   : this.itemPositions.pan.y + this.itemPositions.pan.height / 4;
-
-    this.createCrackleEffect(550, 650);
-
+    // Show visual feedback
     this.showFloatingText(
-      this.items[itemKey].x,
-      this.items[itemKey].y,
-      `Added ${quantity} of ${spiceName} - it's crackling!`,
+      item.x,
+      item.y,
+      `Added ${quantity} of zeera`,
       "#008000"
     );
 
-    // Complete step
+    // Complete the step
     this.completeStep(step, quantity);
 
     // Add to game data
-    gameData.ingredients[spiceName] = quantity;
+    this.registry.get("gameData").ingredients["zeera"] = quantity;
 
-    console.log(`${spiceName} added successfully with quantity ${quantity}`);
+    // Log successful addition
+    console.log(`Zeera added successfully with quantity ${quantity}`);
 
     return true;
   }
 
-  // Create crackling effect for zeera
-  createCrackleEffect(x, y) {
-    try {
-      // Use simpler approach for crackling effect
-      const particles = [];
-      const particleCount = 10;
+  getCurrentStep() {
+    // Find the first uncompleted step in sequential order
+    // Get the next expected step ID (which is equal to completedStepIds.length + 1)
+    const nextExpectedStepId = this.completedStepIds.length + 1;
 
-      // Create multiple particles manually instead of using an emitter
-      for (let i = 0; i < particleCount; i++) {
-        // Create small particle points
-        const particle = this.add.circle(
-          x + Phaser.Math.Between(-15, 15),
-          y + Phaser.Math.Between(-15, 15),
-          Phaser.Math.Between(2, 4),
-          0xffaa00,
-          1
-        );
-        particle.setDepth(5);
-        particles.push(particle);
+    // Find that specific step by ID instead of just any uncompleted step
+    const nextStep = this.steps.find((step) => step.id === nextExpectedStepId);
 
-        // Animate each particle
-        this.tweens.add({
-          targets: particle,
-          x: particle.x + Phaser.Math.Between(-30, 30),
-          y: particle.y + Phaser.Math.Between(-30, 30),
-          alpha: 0,
-          duration: Phaser.Math.Between(300, 600),
-          onComplete: () => {
-            particle.destroy();
-          },
-        });
+    if (nextStep) {
+      return nextStep;
+    }
+
+    // If we can't find the exact next step, fall back to the old behavior as a safety measure
+    return this.steps.find((step) => !step.completed);
+  }
+
+  highlightCurrentStep() {
+    // Clear any existing highlights
+    this.checklist.forEach((item) => {
+      if (!item.completed) {
+        item.text.setColor("#000000"); // Reset to black
       }
+    });
 
-      // Make smoke appear after crackling
-      this.time.delayedCall(600, () => {
-        this.createSmokeEffect(x, y - 10);
-      });
-
-      // Show text feedback
-      this.showFloatingText(x, y - 20, "Crackle, crackle!", "#FFAA00");
-    } catch (error) {
-      console.error("Error creating crackling effect:", error);
-      this.showFloatingText(x, y - 20, "Crackle, crackle!", "#FFAA00");
+    // Find the next uncompleted step
+    const currentStep = this.getCurrentStep();
+    if (currentStep) {
+      const checklistItem = this.checklist[currentStep.id - 1];
+      checklistItem.text.setColor("#0000FF"); // Highlight in blue
     }
-  }
-
-  // Special method for oil options
-  showOilOptions(oilItem, step) {
-    // Check if step is valid
-    if (!step || typeof step !== "object") {
-      console.error("Invalid step provided to showOilOptions:", step);
-      this.showFloatingText(
-        oilItem.x,
-        oilItem.y,
-        "Cannot process this step",
-        "#FF0000"
-      );
-      return;
-    }
-
-    // Create a dummy step if needed
-    if (!step.id) {
-      console.warn("Step without ID provided, creating a dummy step for oil");
-      step = {
-        id: this.steps.length + 999,
-        description: "Add oil",
-        item: "oil",
-        completed: false,
-      };
-    }
-
-    // Define oil quantity options
-    const options = ["1 tsp", "2 tsp", "1 tbsp", "2 tbsp"];
-
-    console.log("Showing oil options dialog");
-
-    // Show quantity selection dialog
-    this.showOptions(
-      oilItem.x,
-      oilItem.y - 100,
-      options,
-      (option) => {
-        console.log(`Selected oil quantity: ${option}`);
-
-        // In debug mode, we'll warn but not prevent
-        if (!this.panOnStove) {
-          console.warn("Pan is not on stove yet!");
-          this.showFloatingText(
-            oilItem.x,
-            oilItem.y,
-            "Warning: Pan should be on stove first (but allowing)",
-            "#FFA500"
-          );
-
-          // Still log the mistake
-          this.mistakes.push({
-            type: "wrong_order",
-            description: "Added oil before placing pan on stove",
-            step: step.id,
-          });
-        }
-
-        // Check if stove is hot (but allow it for debugging)
-        const gameData = this.registry.get("gameData");
-        const stoveHeat = gameData.ingredients["stove_heat"] || "";
-
-        if (!stoveHeat || stoveHeat === "Off") {
-          console.warn("Stove is not hot yet!");
-          this.showFloatingText(
-            oilItem.x,
-            oilItem.y,
-            "Warning: Stove should be hot first (but allowing)",
-            "#FFA500"
-          );
-
-          // Still log the mistake
-          this.mistakes.push({
-            type: "wrong_order",
-            description: "Added oil before turning on stove",
-            step: step.id,
-          });
-        }
-
-        this.createOilEffect(550, 650);
-
-        // Show feedback
-        this.showFloatingText(
-          oilItem.x,
-          oilItem.y,
-          `Added ${option} of oil to pan`,
-          "#008000"
-        );
-
-        // Complete step
-        this.completeStep(step, option);
-
-        // Add to game data
-        gameData.ingredients["oil"] = option;
-
-        console.log("Oil added successfully:", {
-          quantity: option,
-          panOnStove: this.panOnStove,
-          stoveHeat: stoveHeat,
-        });
-      },
-      "Choose Oil Amount"
-    );
-  }
-
-  // Add shutdown method to clean up resources
-  shutdown() {
-    console.log("GameScene shutdown starting...");
-
-    // Stop all timers and animations
-    this.tweens.killAll();
-    this.time.clearPendingEvents();
-
-    // Remove event listeners
-    this.input.off("pointermove", this.updateCoordinateDisplay, this);
-    this.events.off("shutdown", this.shutdown, this);
-
-    // Destroy all created game objects
-    for (const key in this.items) {
-      if (this.items[key] && this.items[key].destroy) {
-        console.log(`Destroying item: ${key}`);
-        this.items[key].destroy();
-      }
-    }
-
-    // Clear all graphics and text objects
-    if (this.debugGraphics) {
-      this.debugGraphics.destroy();
-    }
-
-    if (this.coordinateText) {
-      this.coordinateText.destroy();
-    }
-
-    if (this.timerText) {
-      this.timerText.destroy();
-    }
-
-    // Destroy the checklist elements if they exist
-    if (this.checklist) {
-      this.checklist.forEach((item) => {
-        if (item.text) item.text.destroy();
-        if (item.checkbox) item.checkbox.destroy();
-      });
-    }
-
-    if (this.checklistElements) {
-      if (this.checklistElements.panel) this.checklistElements.panel.destroy();
-      if (this.checklistElements.title) this.checklistElements.title.destroy();
-    }
-
-    if (this.recipeTitleIcon) {
-      this.recipeTitleIcon.destroy();
-    }
-
-    // Clear item references
-    this.items = {};
-    this.currentStep = 0;
-    this.startTime = null;
-    this.panOnStove = false;
-    this.completedStepIds = [];
-    this.actionInProgress = false;
-    this.checklist = null;
-    this.checklistElements = null;
-
-    // Remove other game elements
-    if (this.optionsPanel) {
-      this.optionsPanel.destroy();
-      this.optionsPanel = null;
-    }
-
-    // Remove hand cursor
-    if (this.handCursor) {
-      this.handCursor.destroy();
-      this.handCursor = null;
-    }
-
-    console.log("GameScene shutdown completed");
-  }
-
-  // Add new method to update coordinate display
-  updateCoordinateDisplay(pointer) {
-    if (this.coordinateText) {
-      this.coordinateText.setText(
-        `X: ${Math.floor(pointer.x)}, Y: ${Math.floor(pointer.y)}`
-      );
-    }
-  }
-
-  // Special method for showing cooking options when clicking on the pan
-  showCookingOptionsFromPan(pan, step) {
-    this.showOptions(
-      pan.x,
-      pan.y - 100,
-      step.options,
-      (option) => {
-        this.actionInProgress = true;
-
-        // Show cooking timer - use seconds instead of minutes for gameplay
-        // Extract just the number value from the option
-        const cookTimeMin = parseInt(option);
-        // Convert to seconds for game purposes (fast cooking)
-        let countdown = 7; // Just 7 seconds regardless of option
-
-        const countdownText = this.add
-          .text(
-            this.itemPositions.stove.x,
-            this.itemPositions.stove.y - 70,
-            `Cooking: ${countdown}s`,
-            {
-              font: "16px Arial",
-              fill: "#FF0000",
-              backgroundColor: "#FFFFFF",
-              padding: { x: 5, y: 5 },
-            }
-          )
-          .setOrigin(0.5)
-          .setDepth(4);
-
-        // Start cooking interval
-        const cookingInterval = setInterval(() => {
-          countdown--;
-          countdownText.setText(`Cooking: ${countdown}s`);
-
-          // Create smoke effect randomly during cooking
-          if (Math.random() < 0.2) {
-            this.createSmokeEffect(
-              this.itemPositions.stove.x,
-              this.itemPositions.stove.y - 20
-            );
-          }
-
-          if (countdown <= 0) {
-            clearInterval(cookingInterval);
-            countdownText.destroy();
-
-            // Show cooked potatoes - make the cooked potato visible
-            this.items["potato-diced"].setVisible(false);
-            if (this.items["potato-cooked"]) {
-              this.items["potato-cooked"].setVisible(true);
-            } else {
-              // Use the exact Figma coordinates from itemPositions
-              const cookedPos = this.itemPositions["potato-cooked"];
-              this.items["potato-cooked"] = this.add
-                .image(
-                  cookedPos.x + cookedPos.width / 2,
-                  cookedPos.y + cookedPos.height / 2,
-                  "potato-cooked"
-                )
-                .setDepth(6); // Increased from 3 to 6
-            }
-
-            this.showFloatingText(
-              pan.x,
-              pan.y,
-              "Cooking complete - Dish is ready!",
-              "#008000"
-            );
-
-            // Add extra stirring animation for visual effect
-            const mixingSpoon = this.items["mixingSpoon"];
-            if (mixingSpoon) {
-              // Store original position
-              const originalX = mixingSpoon.x;
-              const originalY = mixingSpoon.y;
-              const originalAngle = mixingSpoon.angle || 0;
-              const originalDepth = mixingSpoon.depth || 2;
-
-              // Move spoon to pan
-              const stirPosition = { x: 550, y: 680 };
-              mixingSpoon.setPosition(stirPosition.x, stirPosition.y);
-              mixingSpoon.setDepth(7); // Increased from 4 to 7
-
-              // Rotate spoon for stirring effect
-              this.tweens.add({
-                targets: mixingSpoon,
-                angle: { from: -15, to: 15 },
-                ease: "Sine.easeInOut",
-                duration: 300,
-                yoyo: true,
-                repeat: 2,
-                onComplete: () => {
-                  // Return spoon to original position
-                  this.tweens.add({
-                    targets: mixingSpoon,
-                    x: originalX,
-                    y: originalY,
-                    angle: originalAngle,
-                    duration: 300,
-                    onComplete: () => {
-                      mixingSpoon.setDepth(originalDepth);
-                    },
-                  });
-                },
-              });
-            }
-
-            // Check if step exists before completing it
-            if (step) {
-              this.completeStep(step, option);
-            } else {
-              console.warn(
-                "Cannot complete step: step is undefined in showCookingOptionsFromPan"
-              );
-            }
-
-            this.actionInProgress = false;
-
-            // Check if recipe is complete
-            if (this.isRecipeComplete()) {
-              this.finishCooking();
-            }
-          }
-        }, 1000);
-      },
-      "Choose Cooking Time"
-    );
   }
 
   checkRequiredTextures() {
@@ -3343,6 +3186,61 @@ class GameScene extends Phaser.Scene {
     } else {
       console.log("All required textures are loaded.");
     }
+  }
+
+  shutdown() {
+    console.log("GameScene shutdown initiated");
+
+    // Clear any active timers or intervals
+    this.time.clearPendingEvents();
+
+    // Destroy all interactive items
+    Object.values(this.items).forEach((item) => {
+      if (item && item.destroy) {
+        item.destroy();
+      }
+    });
+
+    // Clear debug graphics
+    if (this.debugGraphics) {
+      this.debugGraphics.clear();
+      this.debugGraphics.destroy();
+    }
+
+    // Clear options panel
+    if (this.optionsPanel) {
+      this.optionsPanel.destroy();
+      this.optionsPanel = null;
+    }
+
+    // Clear checklist elements
+    if (this.checklistElements) {
+      Object.values(this.checklistElements).forEach((element) => {
+        if (element && element.destroy) {
+          element.destroy();
+        }
+      });
+    }
+
+    // Clear checklist items
+    if (this.checklist) {
+      this.checklist.forEach((item) => {
+        if (item.text && item.text.destroy) {
+          item.text.destroy();
+        }
+        if (item.checkbox && item.checkbox.destroy) {
+          item.checkbox.destroy();
+        }
+      });
+    }
+
+    // Clear hand cursor
+    if (this.handCursor) {
+      this.handCursor.destroy();
+      this.handCursor = null;
+    }
+
+    console.log("GameScene shutdown complete");
   }
 }
 
