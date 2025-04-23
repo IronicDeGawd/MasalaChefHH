@@ -1,11 +1,12 @@
 import Phaser from "phaser";
+import CursorManager from "../ui/components/CursorManager";
 
 class MenuScene extends Phaser.Scene {
   constructor() {
     super("MenuScene");
     this.selectedEnvironment = "kitchen";
     this.selectedRecipe = "alooBhujia";
-    this.handCursor = null; // Add reference for hand cursor
+    this.cursorManager = null; // Replace handCursor with cursorManager
   }
 
   create() {
@@ -143,7 +144,13 @@ class MenuScene extends Phaser.Scene {
     });
 
     // Set up custom cursor
-    this.setHandCursor();
+    this.cursorManager = new CursorManager(this, {
+      cursorKey: "handCursor",
+      scale: 0.5,
+      originX: 0.1,
+      originY: 0.1,
+      depth: 9999
+    });
   }
 
   createTiledBackground(width, height) {
@@ -449,24 +456,12 @@ class MenuScene extends Phaser.Scene {
     this.createSelectionHighlight(selectedItem.x, yPosition, 280, 70);
   }
 
-  // Add custom hand cursor function (same as in GameScene)
-  setHandCursor() {
-    // Hide the default cursor
-    this.input.setDefaultCursor("none");
-
-    // Create custom hand cursor with increased size
-    // Set origin to the tip of the finger (approximately 0.1, 0.1)
-    // instead of center (0.5, 0.5) or top-left (0, 0)
-    this.handCursor = this.add
-      .image(0, 0, "handCursor")
-      .setScale(0.5)
-      .setOrigin(0.1, 0.1) // Set origin to finger tip
-      .setDepth(10);
-
-    // Update hand cursor position
-    this.input.on("pointermove", (pointer) => {
-      this.handCursor.setPosition(pointer.x, pointer.y);
-    });
+  shutdown() {
+    // Clean up the cursor manager when leaving the scene
+    if (this.cursorManager) {
+      this.cursorManager.destroy();
+      this.cursorManager = null;
+    }
   }
 }
 

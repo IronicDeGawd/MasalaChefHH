@@ -18,6 +18,7 @@ export default class CursorManager {
         originY: 0.1, // Y origin to align with pointer (finger tip)
         depth: 9999, // Increased depth to ensure cursor is always on top
         defaultVisible: true, // Whether cursor is visible by default
+        globalCursorHide: false, // Whether to hide cursor for the whole page
       },
       options
     );
@@ -26,6 +27,7 @@ export default class CursorManager {
     this.isActive = false;
     this.eventListeners = [];
     this.interactiveObjects = new Set();
+    this.styleElement = null;
 
     // Initialize cursor
     this.initialize();
@@ -57,6 +59,9 @@ export default class CursorManager {
       this.createCursor();
     }
 
+    // Add CSS to forcefully hide the cursor
+    this.injectCursorCSS();
+
     // Hide default cursor
     this.hideDefaultCursor();
 
@@ -64,6 +69,37 @@ export default class CursorManager {
     this.scene.game.canvas.addEventListener('mouseover', () => {
       this.hideDefaultCursor();
     });
+  }
+
+  /**
+   * Inject CSS to force cursor to be hidden
+   */
+  injectCursorCSS() {
+    // Remove any existing style element
+    if (this.styleElement) {
+      document.head.removeChild(this.styleElement);
+    }
+
+    // Create new style element
+    this.styleElement = document.createElement('style');
+    
+    // Apply CSS based on whether we want global or canvas-only cursor hiding
+    if (this.options.globalCursorHide) {
+      this.styleElement.innerHTML = `
+        * {
+          cursor: none !important;
+        }
+      `;
+    } else {
+      this.styleElement.innerHTML = `
+        canvas, canvas * {
+          cursor: none !important;
+        }
+      `;
+    }
+    
+    // Add style to document
+    document.head.appendChild(this.styleElement);
   }
 
   /**
@@ -92,8 +128,16 @@ export default class CursorManager {
       this.eventListeners.push({ event: "pointermove", handler: moveHandler });
 
       // Set up game focus listeners
-      window.addEventListener('blur', () => this.cursor.setVisible(false));
-      window.addEventListener('focus', () => this.cursor.setVisible(true));
+      window.addEventListener('blur', () => {
+        if (this.cursor) {
+          this.cursor.setVisible(false);
+        }
+      });
+      window.addEventListener('focus', () => {
+        if (this.cursor) {
+          this.cursor.setVisible(true);
+        }
+      });
 
       this.isActive = true;
       console.log("Cursor created successfully");
@@ -108,7 +152,7 @@ export default class CursorManager {
    * @param {Phaser.GameObjects.GameObject} object - The game object to make interactive
    */
   addInteractive(object) {
-    if (!object || !object.setInteractive) return;
+    if (!object || !object.setInteractive || !this.cursor) return;
 
     // Add to tracked objects
     this.interactiveObjects.add(object);
@@ -175,6 +219,12 @@ export default class CursorManager {
     if (this.cursor) {
       this.cursor.destroy();
       this.cursor = null;
+    }
+
+    // Remove CSS style element
+    if (this.styleElement) {
+      document.head.removeChild(this.styleElement);
+      this.styleElement = null;
     }
 
     // Show default cursor

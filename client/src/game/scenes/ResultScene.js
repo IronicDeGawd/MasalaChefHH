@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 import recipes from "../data/recipes";
+import CursorManager from "../ui/components/CursorManager";
 
 class ResultScene extends Phaser.Scene {
   constructor() {
     super("ResultScene");
+    this.cursorManager = null;
   }
 
   create() {
@@ -137,6 +139,19 @@ class ResultScene extends Phaser.Scene {
       });
     });
 
+    // Initialize cursor manager
+    this.cursorManager = new CursorManager(this, {
+      cursorKey: "handCursor",
+      scale: 0.5,
+      originX: 0.1,
+      originY: 0.1,
+      depth: 9999
+    });
+
+    // Add interactive objects to cursor manager
+    this.cursorManager.addInteractive(replayButton);
+    this.cursorManager.addInteractive(menuButton);
+
     // Save game data to blockchain (placeholder)
     this.saveGameData(gameData);
   }
@@ -150,6 +165,14 @@ class ResultScene extends Phaser.Scene {
     setTimeout(() => {
       console.log("Game data saved successfully!");
     }, 1000);
+  }
+
+  shutdown() {
+    // Clean up the cursor manager when leaving the scene
+    if (this.cursorManager) {
+      this.cursorManager.destroy();
+      this.cursorManager = null;
+    }
   }
 }
 
