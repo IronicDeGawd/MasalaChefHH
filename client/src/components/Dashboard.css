@@ -1,0 +1,385 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-header h2 {
+  font-size: 2rem;
+  color: #e65100;
+  margin: 0;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+}
+
+.wallet-address {
+  background-color: #f5f5f5;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  margin-left: 1rem;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-box {
+  background-color: #fff8e1;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.stat-box h3 {
+  font-size: 1.2rem;
+  color: #e65100;
+  margin: 0 0 1rem 0;
+}
+
+.stat-box p {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.nft-toggle-button {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nft-toggle-button:hover {
+  background-color: #f57c00;
+}
+
+.nft-collection {
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.nft-collection h3 {
+  margin-top: 0;
+  color: #e65100;
+  margin-bottom: 1.5rem;
+}
+
+.nft-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.nft-card {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.nft-card:hover {
+  transform: translateY(-5px);
+}
+
+.nft-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  background-color: #f8f8f8;
+}
+
+.nft-card h4 {
+  margin: 1rem 0 0.5rem;
+  color: #333;
+}
+
+.nft-card p {
+  margin: 0 0 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.nft-address {
+  font-family: monospace;
+  background-color: #f5f5f5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.nft-card.locked {
+  opacity: 0.7;
+  background-color: #f5f5f5;
+}
+
+.locked-nft {
+  opacity: 0.5;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 0;
+}
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ff9800;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-games-container {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.play-button {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+}
+
+.play-button:hover {
+  background-color: #43a047;
+}
+
+.game-history {
+  margin-bottom: 2rem;
+}
+
+.game-history h3 {
+  color: #e65100;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.game-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.game-table th,
+.game-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.game-table th {
+  background-color: #ff9800;
+  color: white;
+  font-weight: 500;
+}
+
+.game-table tr {
+  border-bottom: 1px solid #eee;
+}
+
+.game-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.game-table tr.selected {
+  background-color: #fff3e0;
+}
+
+.game-table tr:hover {
+  background-color: #fff3e0;
+}
+
+.view-details-button {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.view-details-button:hover {
+  background-color: #1e88e5;
+}
+
+.game-details {
+  background-color: #fff8e1;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.game-details h3 {
+  margin-top: 0;
+  color: #e65100;
+  margin-bottom: 1.5rem;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.details-grid h4 {
+  margin: 0 0 0.5rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.details-grid p {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.close-button {
+  background-color: #757575;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background-color: #616161;
+}
+
+.dashboard-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.refresh-button {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #f57c00;
+}
+
+.connect-wallet-button {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.connect-wallet-button:hover {
+  background-color: #f57c00;
+}
+
+.wallet-connect-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 0;
+}
+
+.note {
+  color: #757575;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wallet-info {
+    margin-top: 1rem;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-actions button {
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+}

@@ -1,160 +1,288 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useWallet } from "../utils/blockchain/WalletConnector";
+import { toast } from "react-toastify";
+import "./Dashboard.css";
 
 const Dashboard = () => {
-  // Mock data for the dashboard
-  const mockCookingHistory = [
-    {
-      id: 1,
-      recipe: 'Aloo Bhujia',
-      date: '2023-06-15',
-      time: '12:30 PM',
-      duration: '6m 45s',
-      score: '4.5/5',
-      feedback: 'Great job! The spice balance was perfect.'
-    },
-    {
-      id: 2,
-      recipe: 'Aloo Bhujia',
-      date: '2023-06-14',
-      time: '03:15 PM',
-      duration: '8m 20s',
-      score: '3.8/5',
-      feedback: 'Good attempt, but the potatoes were a bit undercooked.'
+  const {
+    account,
+    connectWallet,
+    playerStats,
+    getGameHistory,
+    getGameDetails,
+    getPlayerNFTs,
+  } = useWallet();
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [showNFTs, setShowNFTs] = useState(false);
+  const [nfts, setNfts] = useState({
+    firstDishNFT: null,
+    recipeNFTs: {},
+  });
+
+  // Fetch game data when account changes
+  useEffect(() => {
+    if (account) {
+      fetchGameData();
+    } else {
+      // Reset data when disconnected
+      setGames([]);
+      setSelectedGame(null);
     }
-  ];
+  }, [account]);
+
+  // Function to fetch player's game data
+  const fetchGameData = async () => {
+    if (!account) return;
+
+    setLoading(true);
+    try {
+      // Get game history
+      const gameList = await getGameHistory();
+      setGames(gameList);
+      toast.success("Game history loaded successfully!");
+
+      // Fetch NFTs
+      await fetchNFTs();
+    } catch (err) {
+      console.error("Error fetching game data:", err);
+      toast.error("Failed to load game history. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to fetch player's NFTs
+  const fetchNFTs = async () => {
+    if (!account) return;
+
+    try {
+      const nftData = await getPlayerNFTs();
+      setNfts(nftData);
+    } catch (err) {
+      console.error("Error fetching NFTs:", err);
+    }
+  };
+
+  // Function to view detailed game data
+  const viewGameDetails = async (index) => {
+    if (!account) return;
+
+    try {
+      const gameData = await getGameDetails(index);
+      setSelectedGame({ ...gameData, index });
+    } catch (err) {
+      console.error("Error fetching game details:", err);
+      toast.error("Failed to load game details");
+    }
+  };
+
+  // If no wallet is connected
+  if (!account) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h2>Game Dashboard</h2>
+          <p>Connect your wallet to view your game history.</p>
+        </div>
+
+        <div className="wallet-connect-container">
+          <button onClick={connectWallet} className="connect-wallet-button">
+            Connect Wallet
+          </button>
+          <p className="note">
+            You need a Web3 wallet like MetaMask to view your game history.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard" style={{
-      padding: '30px',
-      backgroundColor: '#FDF5E6',
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <div className="dashboard-header" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '30px'
-      }}>
-        <h1 style={{ color: '#8B4513' }}>MasalaChef Dashboard</h1>
-        <div>
-          <Link to="/game" style={{
-            backgroundColor: '#8B4513',
-            color: 'white',
-            padding: '10px 20px',
-            textDecoration: 'none',
-            borderRadius: '5px',
-            marginRight: '10px'
-          }}>
-            Play Game
-          </Link>
-          <Link to="/" style={{
-            color: '#8B4513',
-            textDecoration: 'none'
-          }}>
-            Home
-          </Link>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h2>Masala Chef Dashboard</h2>
+        <div className="wallet-info">
+          <span className="wallet-address">
+            {account.substring(0, 6)}...{account.substring(account.length - 4)}
+          </span>
         </div>
       </div>
 
-      <div className="dashboard-content" style={{
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <h2 style={{ 
-          color: '#8B4513', 
-          marginBottom: '20px',
-          borderBottom: '2px solid #EBD5C5',
-          paddingBottom: '10px'
-        }}>
-          Your Cooking History
-        </h2>
-
-        {mockCookingHistory.length > 0 ? (
-          <table style={{
-            width: '100%',
-            borderCollapse: 'collapse'
-          }}>
-            <thead>
-              <tr style={{
-                backgroundColor: '#EBD5C5',
-                textAlign: 'left'
-              }}>
-                <th style={{ padding: '12px' }}>Recipe</th>
-                <th style={{ padding: '12px' }}>Date</th>
-                <th style={{ padding: '12px' }}>Time</th>
-                <th style={{ padding: '12px' }}>Duration</th>
-                <th style={{ padding: '12px' }}>Score</th>
-                <th style={{ padding: '12px' }}>Feedback</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockCookingHistory.map(entry => (
-                <tr key={entry.id} style={{
-                  borderBottom: '1px solid #EBD5C5'
-                }}>
-                  <td style={{ padding: '12px' }}>{entry.recipe}</td>
-                  <td style={{ padding: '12px' }}>{entry.date}</td>
-                  <td style={{ padding: '12px' }}>{entry.time}</td>
-                  <td style={{ padding: '12px' }}>{entry.duration}</td>
-                  <td style={{ padding: '12px' }}>{entry.score}</td>
-                  <td style={{ padding: '12px' }}>{entry.feedback}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div style={{
-            textAlign: 'center',
-            padding: '30px',
-            color: '#666'
-          }}>
-            <p>You haven't cooked any recipes yet!</p>
-            <Link to="/game" style={{
-              display: 'inline-block',
-              marginTop: '15px',
-              backgroundColor: '#8B4513',
-              color: 'white',
-              padding: '10px 20px',
-              textDecoration: 'none',
-              borderRadius: '5px'
-            }}>
-              Start Cooking
-            </Link>
-          </div>
-        )}
+      <div className="dashboard-stats">
+        <div className="stat-box">
+          <h3>Total Games</h3>
+          <p>{playerStats.gameCount || 0}</p>
+        </div>
+        <div className="stat-box">
+          <h3>Best Score</h3>
+          <p>{playerStats.bestScore || 0}</p>
+        </div>
+        <div className="stat-box">
+          <h3>Achievements</h3>
+          <button
+            className="nft-toggle-button"
+            onClick={() => setShowNFTs(!showNFTs)}
+          >
+            {showNFTs ? "Hide NFTs" : "Show NFTs"}
+          </button>
+        </div>
       </div>
 
-      <div style={{
-        marginTop: '30px',
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '20px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <h2 style={{ 
-          color: '#8B4513', 
-          marginBottom: '20px',
-          borderBottom: '2px solid #EBD5C5',
-          paddingBottom: '10px'
-        }}>
-          Blockchain Transaction History
-        </h2>
-        
-        <p style={{
-          color: '#666',
-          textAlign: 'center',
-          padding: '20px'
-        }}>
-          Your cooking results are securely stored on the Monad blockchain.
-          This feature will be fully implemented in the complete version.
-        </p>
+      {showNFTs && (
+        <div className="nft-collection">
+          <h3>Your NFT Collection</h3>
+          <div className="nft-grid">
+            {nfts.firstDishNFT ? (
+              <div className="nft-card">
+                <img
+                  src="/assets/nft-artwork/first-dish.png"
+                  alt="First Dish NFT"
+                />
+                <h4>First Dish Achievement</h4>
+                <p className="nft-address">
+                  {nfts.firstDishNFT.substring(0, 6)}...
+                  {nfts.firstDishNFT.substring(nfts.firstDishNFT.length - 4)}
+                </p>
+              </div>
+            ) : (
+              <div className="nft-card locked">
+                <img
+                  src="/assets/recipebook.png"
+                  alt="Locked NFT"
+                  className="locked-nft"
+                />
+                <h4>First Dish Achievement</h4>
+                <p>Complete your first dish to earn!</p>
+              </div>
+            )}
+
+            {Object.entries(nfts.recipeNFTs || {}).map(([recipe, address]) => (
+              <div className="nft-card" key={recipe}>
+                <img src={`/assets/recipe_menu.png`} alt={`${recipe} NFT`} />
+                <h4>{recipe} Master</h4>
+                <p className="nft-address">
+                  {address.substring(0, 6)}...
+                  {address.substring(address.length - 4)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="loading-container">
+          <div className="loader"></div>
+          <p>Loading game history...</p>
+        </div>
+      ) : games.length === 0 ? (
+        <div className="no-games-container">
+          <p>No games played yet.</p>
+          <button
+            onClick={() => (window.location.href = "/game")}
+            className="play-button"
+          >
+            Play Your First Game
+          </button>
+        </div>
+      ) : (
+        <div className="game-history">
+          <h3>Game History</h3>
+          <div className="table-container">
+            <table className="game-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Recipe</th>
+                  <th>Score</th>
+                  <th>Time</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {games.map((game, idx) => (
+                  <tr
+                    key={idx}
+                    className={
+                      selectedGame && selectedGame.index === game.index
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    <td>{playerStats.gameCount - idx}</td>
+                    <td>{game.recipeName}</td>
+                    <td>{game.score}</td>
+                    <td>
+                      {Math.floor(game.timeTaken / 60)}:
+                      {(game.timeTaken % 60).toString().padStart(2, "0")}
+                    </td>
+                    <td>{new Date(game.timestamp).toLocaleString()}</td>
+                    <td>
+                      <button
+                        onClick={() => viewGameDetails(game.index)}
+                        className="view-details-button"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {selectedGame && (
+        <div className="game-details">
+          <h3>Game Details</h3>
+          <div className="details-grid">
+            <div>
+              <h4>Recipe</h4>
+              <p>{selectedGame.selectedRecipe || selectedGame.recipeName}</p>
+            </div>
+            <div>
+              <h4>Score</h4>
+              <p>{selectedGame.score}</p>
+            </div>
+            <div>
+              <h4>Time</h4>
+              <p>
+                {Math.floor(selectedGame.timeTaken / 60)}:
+                {(selectedGame.timeTaken % 60).toString().padStart(2, "0")}
+              </p>
+            </div>
+            <div>
+              <h4>Steps Completed</h4>
+              <p>{selectedGame.stepsCompleted || "All"}</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setSelectedGame(null)}
+            className="close-button"
+          >
+            Close Details
+          </button>
+        </div>
+      )}
+
+      <div className="dashboard-actions">
+        <button onClick={fetchGameData} className="refresh-button">
+          Refresh Data
+        </button>
+        <button
+          onClick={() => (window.location.href = "/game")}
+          className="play-button"
+        >
+          Play Game
+        </button>
       </div>
     </div>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

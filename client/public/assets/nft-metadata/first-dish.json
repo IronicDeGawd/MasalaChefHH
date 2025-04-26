@@ -1,0 +1,26 @@
+{
+  "name": "MasalaChef First Dish Achievement",
+  "description": "This NFT is awarded to players who successfully complete their first dish in the MasalaChef game. A true achievement for any aspiring chef!",
+  "image": "bafybeicniizcyczwobsr4jgou34fc6pus2wiwouhlmg4b4plii4dqqebmq",
+  "external_url": "https://masalachef-game.com/nft/first-dish",
+  "attributes": [
+    {
+      "trait_type": "Achievement Type",
+      "value": "First Dish"
+    },
+    {
+      "display_type": "date",
+      "trait_type": "Achievement Date",
+      "value": "dynamic"
+    },
+    {
+      "trait_type": "Recipe",
+      "value": "dynamic"
+    },
+    {
+      "display_type": "number",
+      "trait_type": "Score",
+      "value": 0
+    }
+  ]
+}
