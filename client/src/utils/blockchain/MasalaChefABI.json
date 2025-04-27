@@ -1,23 +1,5 @@
 [
   {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "connector",
-        "type": "address"
-      }
-    ],
-    "name": "ConnectorAuthorized",
-    "type": "event"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -156,19 +138,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "authorizedConnector",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -243,6 +212,32 @@
         "internalType": "struct MasalaChef.GameLog[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAuthorizedConnector",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAuthorizedServer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -436,19 +431,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "string",
@@ -485,11 +467,62 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_player",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_recipeName",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_score",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_timeTaken",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "_gameData",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_aiResponse",
+        "type": "string"
+      }
+    ],
+    "name": "saveGameLogForPlayer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_connector",
         "type": "address"
       }
     ],
     "name": "setAuthorizedConnector",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_server",
+        "type": "address"
+      }
+    ],
+    "name": "setAuthorizedServer",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

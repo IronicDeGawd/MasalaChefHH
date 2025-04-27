@@ -82,16 +82,13 @@ export const awardFirstDishNFT = async (playerAddress, recipeName, score) => {
   }
 };
 
-export const getFirstDishNFTMetadata = async (tokenId) => {
+export const getFirstDishNFTMetadata = async () => {
   try {
-    // In a production environment, this would fetch metadata from IPFS or your server
-    // based on the tokenURI from the contract
+    // Use IPFS gateway to fetch metadata using the pinned CID on Pinata
+    const ipfsCid = import.meta.env.VITE_IPFS_CID;
+    const ipfsGateway = import.meta.env.VITE_IPFS_GATEWAY;
 
-    // For now, we're still using the static metadata file
-    const baseUrl = window.location.origin;
-    const response = await fetch(
-      `${baseUrl}/assets/nft-metadata/first-dish.json`
-    );
+    const response = await fetch(`${ipfsGateway}${ipfsCid}`);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch NFT metadata: ${response.status}`);

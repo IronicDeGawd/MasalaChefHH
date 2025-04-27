@@ -34,6 +34,10 @@ const fetchWithErrorHandling = async (url, options = {}) => {
  * @returns {Promise} - The response data
  */
 export const connectWallet = async (address) => {
+  if (!address) {
+    throw new Error("Wallet address is required");
+  }
+  
   return fetchWithErrorHandling(`${API_BASE_URL}/wallet/connect`, {
     method: "POST",
     body: JSON.stringify({ address }),
@@ -56,16 +60,52 @@ export const saveGame = async (
   timeTaken,
   gameData
 ) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/game/save`, {
+  if (!address) {
+    throw new Error("Wallet address is required");
+  }
+
+  // Ensure proper data types for numeric values
+  const scoreNum = Number(score);
+  const timeTakenNum = Number(timeTaken);
+  
+  // Log what we're sending to server for debugging
+  console.log("Saving game with data:", {
+    address,
+    recipeName,
+    score: scoreNum,
+    timeTaken: timeTakenNum,
+    gameDataType: typeof gameData
+  });
+
+  const response = await fetchWithErrorHandling(`${API_BASE_URL}/game/save`, {
     method: "POST",
     body: JSON.stringify({
       address,
       recipeName,
-      score,
-      timeTaken,
+      score: scoreNum,
+      timeTaken: timeTakenNum,
       gameData,
     }),
   });
+  
+  // Log the server response for debugging
+  console.log("Server response for saveGame:", response);
+  
+  // If the gameId is -1, it means there was an issue with the game count
+  if (response.gameId === -1) {
+    console.warn("Server returned gameId -1, refreshing game history");
+    // Try to get updated game history to get correct count
+    try {
+      const historyResponse = await getGameHistory(address);
+      if (historyResponse.games && historyResponse.games.length > 0) {
+        response.gameId = historyResponse.gameCount - 1;
+      }
+    } catch (err) {
+      console.error("Failed to refresh game history:", err);
+    }
+  }
+
+  return response;
 };
 
 /**
@@ -74,7 +114,16 @@ export const saveGame = async (
  * @returns {Promise} - The response data
  */
 export const getGameHistory = async (address) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/game/history/${address}`);
+  if (!address) {
+    throw new Error("Wallet address is required");
+  }
+  
+  const response = await fetchWithErrorHandling(`${API_BASE_URL}/game/history/${address}`);
+  
+  // Log the response for debugging
+  console.log("Game history response:", response);
+  
+  return response;
 };
 
 /**
@@ -84,6 +133,14 @@ export const getGameHistory = async (address) => {
  * @returns {Promise} - The response data
  */
 export const getGameDetails = async (address, index) => {
+  if (!address) {
+    throw new Error("Wallet address is required");
+  }
+  
+  if (index === undefined || index === null || isNaN(index)) {
+    throw new Error("Valid game index is required");
+  }
+  
   return fetchWithErrorHandling(`${API_BASE_URL}/game/${address}/${index}`);
 };
 
@@ -93,6 +150,10 @@ export const getGameDetails = async (address, index) => {
  * @returns {Promise} - The response data
  */
 export const getNFTs = async (address) => {
+  if (!address) {
+    throw new Error("Wallet address is required");
+  }
+  
   return fetchWithErrorHandling(`${API_BASE_URL}/nfts/${address}`);
 };
 

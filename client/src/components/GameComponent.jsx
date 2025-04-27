@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,73 @@ const GameComponent = () => {
   const [nftAwarded, setNftAwarded] = useState(null);
   const [autoSaving, setAutoSaving] = useState(false);
   const navigate = useNavigate();
+
+  // Automatically save game data to blockchain when wallet is connected
+  const autoSaveToBlockchain = useCallback(
+    async (data) => {
+      if (!account) return;
+
+      setAutoSaving(true);
+      try {
+        const result = await saveGameToBlockchain(data);
+        setSavedTxHash(result.transactionHash);
+        toast.success("Game saved successfully to the blockchain!");
+
+        // Check if NFT was awarded
+        if (result.nftAwarded) {
+          setTimeout(() => {
+            setNftAwarded({
+              type: "firstDish",
+              address: result.nftAddress,
+            });
+          }, 1000);
+        }
+      } catch (error) {
+        console.error("Error saving game to blockchain:", error);
+        toast.error(`Failed to save game: ${error.message || "Unknown error"}`);
+      } finally {
+        setAutoSaving(false);
+      }
+    },
+    [account, saveGameToBlockchain]
+  );
+
+  const handleGameComplete = useCallback(
+    async (data) => {
+      console.log("Game completed with data:", data);
+      setGameData(data);
+      setGameCompleted(true);
+
+      // Only show completion toast, not saving toast yet
+      toast.success("Game completed!");
+
+      // If wallet is connected, automatically save to blockchain
+      if (account) {
+        toast.info("Game completed! Automatically saving to the blockchain...");
+        await autoSaveToBlockchain(data);
+      } else {
+        toast.success(
+          "Game completed! Connect your wallet to save your progress."
+        );
+      }
+    },
+    [account, autoSaveToBlockchain]
+  );
+  // Handle successful blockchain save - removed duplicate toast
+  const handleSaveSuccess = (result) => {
+    setSavedTxHash(result.transactionHash);
+    toast.success("Game saved successfully to the blockchain!");
+
+    // Check if NFT was awarded
+    if (result.nftAwarded) {
+      setTimeout(() => {
+        setNftAwarded({
+          type: "firstDish",
+          address: result.nftAddress,
+        });
+      }, 1000);
+    }
+  };
 
   useEffect(() => {
     // Initialize game only once
@@ -44,70 +111,7 @@ const GameComponent = () => {
         gameRef.current = null;
       }
     };
-  }, []);
-
-  // Automatically save game data to blockchain when wallet is connected
-  const autoSaveToBlockchain = async (data) => {
-    if (!account) return;
-
-    setAutoSaving(true);
-    try {
-      const result = await saveGameToBlockchain(data);
-      setSavedTxHash(result.transactionHash);
-      toast.success("Game saved successfully to the blockchain!");
-
-      // Check if NFT was awarded
-      if (result.nftAwarded) {
-        setTimeout(() => {
-          setNftAwarded({
-            type: "firstDish",
-            address: result.nftAddress,
-          });
-        }, 1000);
-      }
-    } catch (error) {
-      console.error("Error saving game to blockchain:", error);
-      toast.error(`Failed to save game: ${error.message || "Unknown error"}`);
-    } finally {
-      setAutoSaving(false);
-    }
-  };
-
-  // Handle game completion event from Phaser
-  const handleGameComplete = async (data) => {
-    console.log("Game completed with data:", data);
-    setGameData(data);
-    setGameCompleted(true);
-
-    // Only show completion toast, not saving toast yet
-    toast.success("Game completed!");
-
-    // If wallet is connected, automatically save to blockchain
-    if (account) {
-      toast.info("Game completed! Automatically saving to the blockchain...");
-      await autoSaveToBlockchain(data);
-    } else {
-      toast.success(
-        "Game completed! Connect your wallet to save your progress."
-      );
-    }
-  };
-
-  // Handle successful blockchain save - removed duplicate toast
-  const handleSaveSuccess = (result) => {
-    setSavedTxHash(result.transactionHash);
-    toast.success("Game saved successfully to the blockchain!");
-
-    // Check if NFT was awarded
-    if (result.nftAwarded) {
-      setTimeout(() => {
-        setNftAwarded({
-          type: "firstDish",
-          address: result.nftAddress,
-        });
-      }, 1000);
-    }
-  };
+  }, [handleGameComplete]);
 
   // Handle error in blockchain save
   const handleSaveError = (error) => {

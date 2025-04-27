@@ -13,7 +13,14 @@ const NFTAward = ({ type, nftAddress, onClose }) => {
       setIsAnimating(false);
     }, 3000);
 
-    return () => clearTimeout(timer);
+    // Reset cursor to default when component mounts
+    document.body.style.cursor = "auto";
+
+    return () => {
+      clearTimeout(timer);
+      // This ensures that if the cursor was changed here, it won't persist
+      // after this component unmounts (unless changed elsewhere)
+    };
   }, []);
 
   // Define NFT details based on type
@@ -41,6 +48,7 @@ const NFTAward = ({ type, nftAddress, onClose }) => {
     <AnimatePresence>
       <motion.div
         className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50"
+        style={{ cursor: "auto" }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -70,6 +78,7 @@ const NFTAward = ({ type, nftAddress, onClose }) => {
         >
           <button
             className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white cursor-pointer"
+            style={{ cursor: "pointer" }}
             onClick={onClose}
           >
             ×
@@ -135,6 +144,7 @@ const NFTAward = ({ type, nftAddress, onClose }) => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline break-all"
+                style={{ cursor: "pointer" }}
               >
                 {`${nftAddress.substring(0, 6)}...${nftAddress.substring(
                   nftAddress.length - 4
@@ -146,6 +156,7 @@ const NFTAward = ({ type, nftAddress, onClose }) => {
           <motion.button
             className="btn btn-primary"
             onClick={() => (window.location.href = "/dashboard")}
+            style={{ cursor: "pointer" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.4 }}

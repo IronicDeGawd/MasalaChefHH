@@ -136,3 +136,40 @@ dist
 .pnp.*
 
 designs/
+client_old/
+
+.env
+.env.deployments
+
+# Client specific ignores
+client/build/
+client/coverage/
+client/.DS_Store
+
+# Server specific ignores
+server/logs/
+server/uploads/
+server/data/
+
+# Contract specific ignores
+contract/hardhat/coverage/
+contract/hardhat/.coverage_artifacts/
+contract/hardhat/.coverage_cache/
+contract/hardhat/.coverage_contracts/
+contract/hardhat/typechain/
+contract/hardhat/typechain-types/
+contract/hardhat/gas-report.txt
+contract/hardhat/cache
+contract/hardhat/coverage_artifacts
+contract/hardhat/deployments/
+contract/hardhat/artifacts
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS specific files
+.DS_Store
+Thumbs.db
