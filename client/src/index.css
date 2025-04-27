@@ -1,43 +1,248 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --spice-primary: #ffc107;
+  --curry-primary: #ff5722;
+  --masala-primary: #795548;
+  --background-light: #fdf5e6;
+  --text-dark: #3e2723;
+  --text-light: #fdf5e6;
 }
 
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #FDF5E6;
-  color: #333;
-  line-height: 1.6;
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
+    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-light);
+  color: var(--text-dark);
 }
 
-button {
-  cursor: pointer;
-  outline: none;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
 }
 
-button:hover {
-  opacity: 0.9;
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.App {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
-/* Game container specific styles */
-#game-container {
-  display: block;
-  position: relative;
+::-webkit-scrollbar-thumb {
+  background: var(--curry-primary);
+  border-radius: 4px;
 }
 
-/* Hide the default cursor when in game mode */
-#game-container canvas {
-  cursor: none;
-} 
+::-webkit-scrollbar-thumb:hover {
+  background: var(--masala-primary);
+}
+
+/* Custom utility classes */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-50;
+}
+
+.btn-primary {
+  @apply bg-curry-500 text-white hover:bg-curry-600 focus:ring-curry-400;
+}
+
+.btn-secondary {
+  @apply bg-spice-500 text-masala-800 hover:bg-spice-600 focus:ring-spice-400;
+}
+
+.btn-tertiary {
+  @apply bg-masala-500 text-white hover:bg-masala-600 focus:ring-masala-400;
+}
+
+.btn-outline {
+  @apply border-2 border-curry-500 text-curry-500 hover:bg-curry-500 hover:text-white focus:ring-curry-400;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+}
+
+.input {
+  @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-curry-400 focus:border-transparent;
+}
+
+/* Animation classes */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Toast customization */
+.Toastify__toast {
+  border-radius: 8px !important;
+}
+
+.Toastify__toast--success {
+  background-color: #4caf50 !important;
+}
+
+.Toastify__toast--error {
+  background-color: #f44336 !important;
+}
+
+.Toastify__toast--info {
+  background-color: #2196f3 !important;
+}
+
+.Toastify__toast--warning {
+  background-color: #ff9800 !important;
+}
+
+/* Game container styles */
+.game-container {
+  @apply flex justify-center items-center w-full h-screen relative;
+}
+
+/* Dashboard styles */
+.dashboard-container {
+  @apply max-w-6xl mx-auto p-6 bg-white rounded-xl shadow-md;
+}
+
+.dashboard-header {
+  @apply mb-8 flex justify-between items-center;
+}
+
+.dashboard-stats {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6 mb-8;
+}
+
+.stat-box {
+  @apply bg-spice-50 rounded-lg p-6 shadow-sm text-center border-l-4 border-curry-500;
+}
+
+.nft-collection {
+  @apply bg-gray-50 rounded-lg p-6 mb-8;
+}
+
+.nft-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6;
+}
+
+.nft-card {
+  @apply bg-white rounded-lg overflow-hidden shadow-sm text-center transition-transform duration-300 hover:-translate-y-2;
+}
+
+.game-table {
+  @apply w-full border-collapse;
+}
+
+.game-table th {
+  @apply bg-curry-500 text-white font-medium p-3;
+}
+
+.game-table tr {
+  @apply border-b border-gray-100;
+}
+
+.game-table tr:nth-child(even) {
+  @apply bg-gray-50;
+}
+
+.game-table tr.selected {
+  @apply bg-spice-50;
+}
+
+.game-details {
+  @apply bg-spice-50 rounded-lg p-6 mb-8 animate-fade-in;
+}
+
+.details-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Blockchain integration styles */
+.blockchain-integration {
+  @apply mt-6;
+}
+
+.blockchain-buttons {
+  @apply flex flex-col sm:flex-row justify-center items-center gap-4;
+}
+
+.network-info {
+  @apply text-sm text-gray-500;
+}
+
+.nft-award {
+  @apply mt-8 p-4 bg-spice-50 rounded-lg text-center;
+}
+
+.nft-image {
+  @apply max-w-[200px] mx-auto my-4;
+}
+
+/* NFT Award modal */
+.nft-award-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-50;
+}
+
+.nft-award-content {
+  @apply bg-white rounded-2xl p-8 text-center max-w-md relative shadow-2xl;
+}
+
+.close-button {
+  @apply absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white cursor-pointer;
+}
+
+/* Landing page styles */
+.landing-page {
+  @apply text-center py-12 px-4 bg-spice-50 min-h-screen;
+}
+
+.feature {
+  @apply p-4;
+}
+
+.blockchain-features {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-6 my-6;
+}
+
+.cta-section {
+  @apply mt-12;
+}
+
+/* Loading animation */
+.loader {
+  @apply w-10 h-10 border-4 border-gray-200 border-t-curry-500 rounded-full animate-spin;
+}
