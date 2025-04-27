@@ -17,7 +17,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://production.dt4m177dpz07s.amplifyapp.com",
+  })
+);
 app.use(express.json());
 
 // Initialize contract relationships
